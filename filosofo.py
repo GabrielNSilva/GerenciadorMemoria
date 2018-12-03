@@ -18,6 +18,7 @@ class Filosofo(threading.Thread):
         self.fome = 400
         self.garfo_esq = garfo_e
         self.garfo_dir = garfo_d
+        self.end = -1
 
         # mmu = MMU()
         overlays = mmu.overlay(self)
@@ -28,8 +29,9 @@ class Filosofo(threading.Thread):
             if end_ant != -1:
                 page = mmu.get_virtual(end_ant)
                 page.prox = end
+                self.end = end
             end_ant = end
-            print('\tALOCADA -',pg)
+            print('[' + str(self.id) + '] ' + '\tALOCADA -', pg)
         print(mmu.page_table)
 
     def __str__(self):
@@ -65,6 +67,22 @@ class Filosofo(threading.Thread):
         # print(self)
 
     def think(self):
+
+        print('[' + str(self.id) + '] ' + 'Gerando novamente os overlays do processo...')
+        overlays = mmu.overlay(self)
+        print('[' + str(self.id) + '] ' + 'ARMAZENANDO NOVAMENTE...')
+        # print(overlays)
+        end_ant = -1
+        for pg in overlays:
+            end = mmu.alocar_virtual(pg, end_ant+1)
+            if end_ant != -1:
+                page = mmu.get_virtual(end_ant)
+                page.prox = end
+                self.end = end
+            end_ant = end
+            print('[' + str(self.id) + '] ' + '\tALOCADA -', pg)
+        print(mmu.page_table)
+
         t = random.randrange(self.T_MIN, self.T_MAX)
         self.estado = 'PENSANDO'
         self.show_estado()
@@ -73,6 +91,14 @@ class Filosofo(threading.Thread):
         time.sleep(t*10/self.F_MAX)
 
     def eat(self):
+
+        print('[' + str(self.id) + '] ' + 'Recuperando overlays do processo...')
+        prox = self.end
+        while prox != None:
+            page = mmu.get_virtual(prox)
+            print('[' + str(self.id) + '] ' + '\tRECUPERADA -', page)
+            prox = page.prox
+
         t = random.randrange(self.T_MIN, self.T_MAX)
         self.estado = 'COMENDO'
         self.show_estado()

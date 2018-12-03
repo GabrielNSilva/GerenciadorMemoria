@@ -88,8 +88,23 @@ class MMU():
         # Armazenar relação na tabela de pagina
         self.page_table.incluir(endv, end_memp, end_swap)
 
-    def repaginar(self, obj):
-        pass
-        # N sei direiro, esse metodo é so uma ideia
+    def repaginar(self, page, end_virt):
         # para atualizar uma pagina q foi alterada durante seu passeio no cpu
         # deve-se substituir as paginas antigas pelas novas
+        if isinstance(page, Pagina):
+            if end_virt and not mem_virt.pagina[end_virt]:
+                page.end = end_virt
+                # flag so pra saber q end virtual esta em uso
+                mem_virt.pagina[end_virt] = True
+                # Salvando pagina na memoria fisica - PAGINACAO
+                self.paginar(page, end_virt)
+                return end_virt
+
+            for end in range(0, len(mem_virt.pagina), 10):
+                if mem_virt.pagina[end] == None:
+                    page.end = end
+                    # flag so pra saber q end virtual esta em uso
+                    mem_virt.pagina[end] = True
+                    # Salvando pagina na memoria fisica - PAGINACAO
+                    self.paginar(page, end)
+                    return end
